@@ -14,7 +14,7 @@ def list_eligible_subdomains():
             if ( x['NAME']!='' ) and ( x['TYPE']=='a' or x['TYPE']=='AAAA') ]
     return eligible_subdomains
 
-def get_subdomain_ids_by_name(sub):
+def get_subdomain_by_name(sub):
     matched_sub_names= [ x for x in list_eligible_subdomains() if (x['NAME']==sub)]
     return matched_sub_names
 
@@ -36,21 +36,41 @@ parser.add_option_group(ip_update_group)
 if len(args)== 1:
     logger = logging.getLogger('linode_dns')    
     if options.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
 
     subdomain=args[0]
 
-    IDs = get_subdomain_ids_by_name(subdomain)
-    if IDs:
+    subs = get_subdomain_by_name(subdomain)
+    if subs:
         logger.debug("%s - valid subdomain" %(subdomain))
-        if options.ipv4_address:
-            logger.debug("Updating %s's ipv4 address"%(options.ipv4_address))
+        for sub in subs:
+            if options.ipv4_address and sub['TYPE']=='a':
+                logger.debug("Verifying %s's ipv4 address against %s"%
+                        (subdomain, options.ipv4_address))
+                if options.ipv4_address == sub['TARGET']:
+                    logger.debug('IPv4 address is already up-to-date.')
+                else:
+                    try:
+                        linode.domain_resource_update(DomainID=DOMAIN_ID, 
+                                ResourceID=sub['RESOURCEID'],Target=options.ipv4_address)
+                    except api.ApiError, e:
+                        logger.error(" %d - %s"%( e.value[0]['ERRORCODE'], e.value[0]['ERRORMESSAGE']))
             
-        if options.ipv6_address:
-            logger.debug("Updating %s's ipv6 address"%(options.ipv6_address))
+            if options.ipv6_address and sub['TYPE']=='AAAA':
+                logger.debug("Updating %s's ipv6 address to %s"%
+                        (subdomain, options.ipv6_address))
+                if options.ipv6_address == sub['TARGET']:
+                    logger.debug('IPv6 addresss is already up-to-date.')
+                else:
+                    try:
+                        linode.domain_resource_update(DomainID=DOMAIN_ID,
+                                ResourceID=sub['RESOURCEID'],Target=options.ipv6_address)
+                    except api.ApiError, e:
+                        logger.error(" %d - %s"%( e.value[0]['ERRORCODE'], e.value[0]['ERRORMESSAGE']))
+
 
     else:
-        logger.debug('invalid subdomain')
+        logger.debug('%s - invalid subdomain'%(subdomain))
 else:
     if len(args) == 0: print "Please enter a subdomain."
     if len(args)  > 1: print "Too many arguments."
