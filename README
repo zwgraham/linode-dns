@@ -1,0 +1,5 @@
+This script was written out of the desire to have my router dynamically update my linode account's dns entries. Dynamic IP updaters already exist, but this is meant to be called on a server via ssh.
+
+Example (using public key cryptogrophy)
+
+user@router $ ssh user@server -c "linode_dns.py -4 $(ip -4 addr show <WAN_IFACE>)"
