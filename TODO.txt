@@ -4,3 +4,9 @@ make a list option, that will ignore -4 and -6
 use ssh environment variable to update by public ip address
     easy, requires sys module
 
+api key and domainid need to be read from a file
+    easy
+
+search function for domain id on initial setup
+    easy
+
