@@ -3,10 +3,10 @@ import json
 import sys
 import logging
 from optparse import OptionParser, OptionGroup
-KEY='ZhqCgadxLgkXxKg0A8IPUZYMJwEli4YS38FKdCmR3eFCiOkDVKHxijLAS6jCyYoM'
+#KEY='ZhqCgadxLgkXxKg0A8IPUZYMJwEli4YS38FKdCmR3eFCiOkDVKHxijLAS6jCyYoM'
 DOMAIN_ID=291947
-
-linode=api.Api(KEY)
+DEFAULT_API_CONFIG_FILE=./linodeapi.conf
+linode=api.Api()
 
 
 def list_eligible_subdomains():
@@ -26,6 +26,8 @@ ip_update_group.add_option("-4", "--ipv4", dest="ipv4_address", metavar="addr",
         help="Update IPv4 address update")
 ip_update_group.add_option("-6", "--ipv6", dest="ipv6_address", metavar="addr",
         help="Update IPv6 address update")
+parser.add_option("-C", "--config" dest=config_file metavar="file.conf"
+        help="linode API config file", default=DEFAULT_API_CONFIG_FILE)
 parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Be verbose", default=False)
 parser.add_option("-q", "--quiet", dest="verbose", action="store_false",
