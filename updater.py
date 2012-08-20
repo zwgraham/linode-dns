@@ -3,19 +3,17 @@ import json
 import sys
 import logging
 from optparse import OptionParser, OptionGroup
-#KEY='ZhqCgadxLgkXxKg0A8IPUZYMJwEli4YS38FKdCmR3eFCiOkDVKHxijLAS6jCyYoM'
-DOMAIN_ID=291947
-DEFAULT_API_CONFIG_FILE=./linodeapi.conf
+DEFAULT_API_CONFIG_FILE="linodeapi.conf"
 linode=api.Api()
 
 
-def list_eligible_subdomains():
-    eligible_subdomains=[ x for x in linode.domain_resource_list(DomainID=DOMAIN_ID)
+def list_eligible_subdomains(domain_id):
+    eligible_subdomains=[ x for x in linode.domain_resource_list(DomainID=domain_id)
             if ( x['NAME']!='' ) and ( x['TYPE']=='a' or x['TYPE']=='AAAA') ]
     return eligible_subdomains
 
-def get_subdomain_by_name(sub):
-    matched_sub_names= [ x for x in list_eligible_subdomains() if (x['NAME']==sub)]
+def get_subdomain_by_name(sub, domain_id):
+    matched_sub_names= [ x for x in list_eligible_subdomains(domain_id) if (x['NAME']==sub)]
     return matched_sub_names
 
 usage = "usage: %prog [options] <subdomain>"
@@ -26,7 +24,7 @@ ip_update_group.add_option("-4", "--ipv4", dest="ipv4_address", metavar="addr",
         help="Update IPv4 address update")
 ip_update_group.add_option("-6", "--ipv6", dest="ipv6_address", metavar="addr",
         help="Update IPv6 address update")
-parser.add_option("-C", "--config" dest=config_file metavar="file.conf"
+parser.add_option("-C", "--config", dest="config_file", metavar="file.conf",
         help="linode API config file", default=DEFAULT_API_CONFIG_FILE)
 parser.add_option("-v", "--verbose", dest="verbose", action="store_true",
         help="Be verbose", default=False)
@@ -36,13 +34,32 @@ parser.add_option_group(ip_update_group)
 
 (options, args) = parser.parse_args()
 if len(args)== 1:
+    import ConfigParser
+    logging.basicConfig()
     logger = logging.getLogger('linode_dns')    
     if options.verbose:
         logger.setLevel(logging.DEBUG)
 
+    try:
+        logger.debug("Parsing config file.")
+        Config = ConfigParser.ConfigParser()
+        Config.read(options.config_file)
+    except Exception, e:
+        logger.error("Problem reading config file. %s" %(str(e)))
+        sys.exit()
+
+    try:
+        key=Config.get('Account', 'Key')
+        domain_id=Config.get('Account', 'DomainID')
+    except:
+        logger.error("Malformed config file.")
+        sys.exit()
+
+    linode=api.Api(key)
+    
     subdomain=args[0]
 
-    subs = get_subdomain_by_name(subdomain)
+    subs = get_subdomain_by_name(subdomain, domain_id)
     if subs:
         logger.debug("%s - valid subdomain" %(subdomain))
         for sub in subs:
