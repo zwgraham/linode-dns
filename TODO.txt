@@ -1,0 +1,6 @@
+make a list option, that will ignore -4 and -6
+    easy, research of optparse required
+
+use ssh environment variable to update by public ip address
+    easy, requires sys module
+
