@@ -1,5 +1,14 @@
-This script was written out of the desire to have my router dynamically update my linode account's dns entries. Dynamic IP updaters already exist, but this is meant to be called on a server via ssh.
+This script was written out of the desire to have my router dynamically update my linode account's dns entries. Dynamic IP updaters already exist, but my router and servers do not run python 3. This is meant to be called on a server, with python 2.7, via ssh.
 
-Example (using public key cryptogrophy)
+I added a cron job to my router that periodically calls updater.py on a remote server.
 
-user@router $ ssh user@server -c "linode_dns.py -4 $(ip -4 addr show <WAN_IFACE>)"
+
+#Example (using public key cryptogrophy)
+#!/bin/sh
+#
+USER=user
+HOST=host
+P=/path/to/script
+WANIF=br0
+ipaddr=$(ip -4 addr show $WANIF|grep "inet "|awk '{print $2}|cut -d'/' -f1')
+ssh $USER@$HOST -C "python ${P}/updater.py -4 $ipaddr"
